@@ -1,2 +1,2 @@
-# Regression
-Book of my lecture notes
+# IA with Python
+Available lecture notes and tutorials
