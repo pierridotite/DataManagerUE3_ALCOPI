@@ -1,0 +1,7 @@
+distinctipy==1
+matplotlib==3.7.5
+numpy==2
+pandas==2.2.3
+prince==0.16.0
+scikit_learn==1.4.2
+seaborn==0.13.2
