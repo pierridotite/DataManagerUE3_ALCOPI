@@ -5,14 +5,46 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.preprocessing import StandardScaler
 
 # Charger les données
-data_src = r'Data\combined_data.csv'
-data = pd.read_csv(data_src)
+data = pd.read_csv(r'c:\Users\ACER\OneDrive\Bureau\DataManagerUE3_ALCOPI\Data\combined_data.csv')
+original_counts = data.iloc[:, -1].value_counts()  # Sauvegarde des données de base
+
+# Augmentation pour équilibrer les espèces
+species_counts = data.iloc[:, -1].value_counts()
+max_count = species_counts.max()
+augmented_frames = []
+for specie in species_counts.index:
+    df_specie = data[data.iloc[:, -1] == specie]
+    df_oversampled = df_specie.sample(max_count, replace=True, random_state=42)
+    augmented_frames.append(df_oversampled)
+data = pd.concat(augmented_frames, axis=0).reset_index(drop=True)
+# Fin de l'augmentation
+
+# Visualisation de l'augmentation
+augmented_counts = data.iloc[:, -1].value_counts()
+original_counts = original_counts.reindex(augmented_counts.index)  # aligner les indices
+augmentation_numbers = augmented_counts - original_counts
+
+plt.figure(figsize=(8,6))
+species = augmented_counts.index
+plt.bar(species, original_counts, color='blue', label='Data de base')
+plt.bar(species, augmentation_numbers, bottom=original_counts, color='orange', label='Augmentation')
+plt.xlabel("Espèce")
+plt.ylabel("Nombre d'échantillons")
+plt.title("Visualisation de l'augmentation")
+plt.xticks(rotation=45)
+plt.legend()
+plt.tight_layout()
+plt.show()
+
 
 # On considère que la dernière colonne est la cible
 X = data.iloc[:, :-1]
 y = data.iloc[:, -1]
+
+
 
 # Séparation des données
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
