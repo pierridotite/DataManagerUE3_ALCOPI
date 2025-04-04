@@ -8,7 +8,8 @@ from sklearn.metrics import accuracy_score, confusion_matrix, classification_rep
 from sklearn.preprocessing import StandardScaler
 
 # Charger les données
-data = pd.read_csv(r'c:\Users\ACER\OneDrive\Bureau\DataManagerUE3_ALCOPI\Data\combined_data.csv')
+data_src = r'Data\combined_data.csv'
+data = pd.read_csv(data_src)
 original_counts = data.iloc[:, -1].value_counts()  # Sauvegarde des données de base
 
 # Augmentation pour équilibrer les espèces
