@@ -46,10 +46,11 @@ print("R carré :", r2)
 
 # Graphique des importances des variables
 importances = rf.feature_importances_
-indices = np.argsort(importances)[::-1]
 plt.figure(figsize=(10,6))
 plt.title("Importances des variables")
-plt.bar(range(len(importances)), importances[indices], align="center")
-plt.xticks(range(len(importances)), X.columns[indices], rotation=90)
+plt.bar(range(len(importances)), importances, align="center")
+# Limiter le nombre de labels affichés sur l'axe x
+step = max(1, len(importances) // 10)
+plt.xticks(range(0, len(importances), step), X.columns[::step], rotation=45, ha="right")
 plt.tight_layout()
 plt.show()
