@@ -22,9 +22,8 @@ rf = RandomForestClassifier(random_state=42)
 rf.fit(X_train, y_train)
 y_pred = rf.predict(X_test)
 
-
 cm = confusion_matrix(y_test, y_pred)
-
+print(classification_report(y_test, y_pred))
 
 # Plot de la matrice de confusion
 plt.figure(figsize=(8,6))
