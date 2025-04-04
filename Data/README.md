@@ -68,4 +68,25 @@ For any questions regarding this dataset, please contact [to be completed]
 Jupyter notebooks are provided for:
 - Data augmentation
 - Region of interest selection
-- Spectral preprocessing 
+- Spectral preprocessing
+
+# Projet Random Forest ML
+
+Ce dossier contient le fichier de données utilisé pour entraîner le modèle ML.
+Le script affiche désormais non seulement la précision, la matrice de confusion, le rapport de classification et la matrice de corrélation des caractéristiques, 
+mais également des indicateurs supplémentaires pour une évaluation approfondie (dont le coefficient de détermination R carré, calculé après encodage des étiquettes).
+
+## Structure du projet
+- **Machine-Learning/RanfomForest/randomforest.py** : Script principal qui charge les données, affiche la matrice de corrélation, entraîne un modèle Random Forest et affiche dans la console la précision, la matrice de confusion, le rapport de classification et le R carré.
+- **Data/combined_data.csv** : Fichier CSV des données (les dernières colonnes correspondent à la cible).
+
+## Instructions
+Avant d'exécuter le script, installez les dépendances :
+```
+pip install pandas numpy matplotlib seaborn scikit-learn
+```
+
+Ensuite, lancez le script depuis le répertoire `Machine-Learning/RanfomForest` :
+```
+python randomforest.py
+```
