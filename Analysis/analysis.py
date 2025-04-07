@@ -11,7 +11,7 @@ from sklearn.decomposition import PCA
 # 1. Chargement et aperçu du dataset
 # -------------------------------
 # Remplacer le chemin si nécessaire
-data_path = r'Data\combined_data.csv'
+data_path = 'C:/Users/alex2/OneDrive/Documents/GitHub/DataManagerUE3_ALCOPI/Analysis/combined_data.csv'
 df = pd.read_csv(data_path)
 
 print("Aperçu du dataset :")
