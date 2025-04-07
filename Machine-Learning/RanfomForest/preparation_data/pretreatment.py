@@ -224,13 +224,7 @@ for method_name, func in preprocessing_methods.items():
     # Calcul des métriques
     acc = accuracy_score(y_val, y_pred)
     
-    # Encodage des labels pour le calcul du R²
-    le = LabelEncoder()
-    y_val_enc = le.fit_transform(y_val)
-    y_pred_enc = le.transform(y_pred)
-    r2 = r2_score(y_val_enc, y_pred_enc)
-    
-    results[method_name] = {"accuracy": acc, "r2": r2}
+    results[method_name] = {"accuracy": acc}
     
     # Affichage du rapport de classification
     print("Classification Report:")
@@ -260,15 +254,6 @@ plt.figure(figsize=(8,4))
 plt.bar(results_df.index, results_df['accuracy'], color='skyblue')
 plt.ylabel("Accuracy")
 plt.title("Comparaison des accuracies selon le prétraitement")
-plt.xticks(rotation=45)
-plt.tight_layout()
-plt.show()
-
-# Comparaison du R²
-plt.figure(figsize=(8,4))
-plt.bar(results_df.index, results_df['r2'], color='salmon')
-plt.ylabel("R²")
-plt.title("Comparaison des R² selon le prétraitement")
 plt.xticks(rotation=45)
 plt.tight_layout()
 plt.show()

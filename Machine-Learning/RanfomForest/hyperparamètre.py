@@ -170,8 +170,3 @@ plt.xlabel("Prédictions")
 plt.ylabel("Véritables")
 plt.tight_layout()
 plt.show()
-
-# Calcul du R² pour le modèle optimisé
-y_pred_best_enc = le.transform(y_pred_best)
-r2_best = r2_score(y_val_enc, y_pred_best_enc)
-print("R² (Modèle optimisé) :", r2_best)

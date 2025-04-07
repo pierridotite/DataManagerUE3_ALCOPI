@@ -107,13 +107,6 @@ plt.ylabel("Véritables")
 plt.tight_layout()
 plt.show()
 
-# Calcul du R² (après encodage des labels)
-le = LabelEncoder()
-y_val_enc = le.fit_transform(y_val)
-y_pred_enc = le.transform(y_pred)
-r2 = r2_score(y_val_enc, y_pred_enc)
-print("R² :", r2)
-
 # Graphique des importances des variables
 importances = rf.feature_importances_
 plt.figure(figsize=(10,6))
