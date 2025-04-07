@@ -126,7 +126,6 @@ param_grid = {
     'max_depth': [None, 5, 10, 20],
     'min_samples_split': [2, 5, 10],
     'min_samples_leaf': [1, 2, 4],
-    # Correction : remplacer "auto" par None (et conserver "sqrt" et "log2")
     'max_features': ['sqrt', 'log2', None]
 }
 
