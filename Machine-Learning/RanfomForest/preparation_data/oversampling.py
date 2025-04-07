@@ -5,6 +5,7 @@ import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, r2_score
 from sklearn.preprocessing import LabelEncoder
+from imblearn.over_sampling import RandomOverSampler  # Importer RandomOverSampler
 
 # ================================
 # 1. Chargement et préparation des données
@@ -36,6 +37,12 @@ training_data = data.drop(validation_data.index)
 X_train = training_data.drop(columns=[target_col])
 y_train = training_data[target_col]
 
+# Appliquer l'oversampling sur les données d'entraînement
+ros = RandomOverSampler(random_state=42)
+X_train_over, y_train_over = ros.fit_resample(X_train, y_train)
+# Comptage des effectifs sur les données oversamplées
+oversampled_counts = pd.Series(y_train_over).value_counts().sort_index()
+
 X_val = validation_data.drop(columns=[target_col])
 y_val = validation_data[target_col]
 
@@ -54,6 +61,8 @@ val_counts = validation_data[target_col].value_counts().sort_index()
 order = train_counts.sort_values(ascending=False).index
 train_counts = train_counts.reindex(order)
 val_counts = val_counts.reindex(order, fill_value=0)
+oversampled_counts = oversampled_counts.reindex(order, fill_value=0)
+additional_counts = oversampled_counts - train_counts
 
 species = order
 x = np.arange(len(species))
@@ -64,10 +73,12 @@ plt.figure(figsize=(10,6))
 plt.bar(x, val_counts, width, color='green', label='Validation dataset (5 per species)')
 # Partie training empilée au-dessus
 plt.bar(x, train_counts, width, bottom=val_counts, color='blue', label='Training dataset')
+# Partie oversampling au-dessus (la différence entre oversampled et training)
+plt.bar(x, additional_counts, width, bottom=val_counts + train_counts, color='orange', label='Oversampled training data')
 plt.xticks(x, species, rotation=45)
 plt.xlabel("Espèce")
 plt.ylabel("Nombre d'échantillons")
-plt.title("Histogramme : Effectifs par espèce (Training + Validation)")
+plt.title("Histogramme : Effectifs par espèce (Validation + Training + Oversampling)")
 plt.legend()
 plt.tight_layout()
 plt.show()
@@ -76,9 +87,9 @@ plt.show()
 # 3. Entraînement et évaluation du modèle
 # ================================
 
-# Entraînement d'un modèle Random Forest sur le jeu d'entraînement
+# Entraînement d'un modèle Random Forest sur le jeu d'entraînement oversamplé
 rf = RandomForestClassifier(random_state=42)
-rf.fit(X_train, y_train)
+rf.fit(X_train_over, y_train_over)
 
 # Prédictions sur le jeu de validation
 y_pred = rf.predict(X_val)
