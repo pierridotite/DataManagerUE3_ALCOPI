@@ -288,7 +288,8 @@ class SpectralDataset(Dataset):
         return self.X[idx], self.y[idx]
 
 
-# Simple Perceptron model (one dense layer)
+# Simple Perceptron model (one d
+# ense layer)
 class Perceptron(nn.Module):
     """Single layer perceptron for regression
 
