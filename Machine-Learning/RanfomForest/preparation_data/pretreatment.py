@@ -23,10 +23,10 @@ validation_frames = []
 for specie in data[target_col].unique():
     specie_df = data[data[target_col] == specie]
     # Si possible, on prélève sans remise ; sinon, avec remise
-    if len(specie_df) >= 5:
-        val_specie = specie_df.sample(n=5, random_state=42)
+    if len(specie_df) >= 6:
+        val_specie = specie_df.sample(n=6, random_state=42)
     else:
-        val_specie = specie_df.sample(n=5, replace=True, random_state=42)
+        val_specie = specie_df.sample(n=6, replace=True, random_state=42)
     validation_frames.append(val_specie)
 validation_data = pd.concat(validation_frames)
 
