@@ -69,38 +69,6 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 
-# Visualisation combinée du train (stacké) et du data set de validation dans un seul plot
-
-# Calcul des comptes pour le train
-base = original_counts
-oversample_numbers = max_count - original_counts
-random_aug_counts = pd.Series(n_random, index=original_counts.index)
-train_totals = base + oversample_numbers + random_aug_counts
-
-# Comptes pour le data set de validation
-validation_counts = y_test.value_counts().reindex(original_counts.index)
-
-import numpy as np
-species = original_counts.index
-x = np.arange(len(species))
-width = 0.35
-
-plt.figure(figsize=(10,6))
-# Barres empilées pour le train (décalées à gauche)
-plt.bar(x - width/2, base, width, color='blue', label='Train: Données de base')
-plt.bar(x - width/2, oversample_numbers, width, bottom=base, color='orange', label='Train: Oversampling')
-plt.bar(x - width/2, random_aug_counts, width, bottom=base+oversample_numbers, color='green', label='Train: Augmentation Aléatoire')
-# Barre simple pour le data set de validation (décalée à droite)
-plt.bar(x + width/2, validation_counts, width, color='red', label='Validation')
-
-plt.xlabel("Espèce")
-plt.ylabel("Nombre d'échantillons")
-plt.title("Répartition par espèce: Train vs Validation")
-plt.xticks(x, species, rotation=45)
-plt.legend()
-plt.tight_layout()
-plt.show()
-
 # On considère que la dernière colonne est la cible pour l'entraînement
 X_train_aug = train.iloc[:, :-1]
 y_train_aug = train.iloc[:, -1]
