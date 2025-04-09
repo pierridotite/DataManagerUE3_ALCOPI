@@ -124,8 +124,9 @@ grid_search = GridSearchCV(pls_grid, param_grid, cv=5, n_jobs=-1, scoring='accur
 total_iter = len(param_grid['estimator__n_components']) * 5
 print("\nLancement de la recherche du meilleur nombre de composantes sur {} tâches...".format(total_iter))
 
-with tqdm_joblib(tqdm(desc="GridSearch PLS", total=total_iter)):
-    grid_search.fit(X_train_scaled, y_train_enc)
+# with tqdm_joblib(tqdm(desc="GridSearch PLS", total=total_iter)):
+#     grid_search.fit(X_train_scaled, y_train_enc)
+grid_search.fit(X_train_scaled, y_train_enc)
 
 print("\nMeilleur nombre de composantes trouvé :", grid_search.best_params_['estimator__n_components'])
 print("Meilleure accuracy en CV : {:.4f}".format(grid_search.best_score_))
