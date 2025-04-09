@@ -13,7 +13,7 @@ from tqdm_joblib import tqdm_joblib
 # 1. Chargement et préparation des données
 # ================================
 
-data_src = r'Data\combined_data.csv'
+data_src = ('/Users/constance/Documents/GitHub/DataManagerUE3_ALCOPI/Data/combined_data.csv')
 data = pd.read_csv(data_src)
 
 # On considère que la dernière colonne est la cible
