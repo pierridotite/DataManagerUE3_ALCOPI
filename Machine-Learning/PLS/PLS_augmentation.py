@@ -16,7 +16,7 @@ from sklearn.model_selection import cross_val_score
 ### CHARGEMENT DES DONNEES ###
 
 # Load the combined data
-data = pd.read_csv('C:/Users/alex2/anaconda3/envs/datascience/combined_data.csv', 
+data = pd.read_csv('Data\combined_data.csv', 
                       sep=',', 
                       index_col=0)
 print(data)
