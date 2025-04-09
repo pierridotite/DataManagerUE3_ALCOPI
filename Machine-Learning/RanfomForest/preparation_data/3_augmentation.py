@@ -3,9 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, r2_score
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import ParameterGrid
+from sklearn.model_selection import ParameterGrid, StratifiedKFold
+# Pour fixer la graine dans la fonction d'augmentation (optionnel)
+np.random.seed(42)
 
 # ================================
 # 1. Chargement et préparation des données
@@ -16,7 +18,7 @@ data = pd.read_csv(data_src)
 # On considère que la dernière colonne est la cible
 target_col = data.columns[-1]
 
-# Création du jeu de validation : 5 individus par espèce
+# Création du jeu de validation : 6 individus par espèce
 validation_frames = []
 for specie in data[target_col].unique():
     specie_df = data[data[target_col] == specie]
@@ -64,10 +66,9 @@ def augment_spectrum(spectrum, scale_min, scale_max, noise_std, shift_min, shift
 # ================================
 # 3. Recherche en grille sur les paramètres d'augmentation
 # ================================
-# Grille de paramètres plus complète
 param_grid_aug = {
-    'scale_min': [0.80,0.85],
-    'scale_max': [1.15,1.20],
+    'scale_min': [0.80, 0.85],
+    'scale_max': [1.15, 1.20],
     'noise_std': [0.005, 0.01, 0.015],
     'shift_min': [-8, -5, -3],
     'shift_max': [3, 5, 8]
@@ -77,10 +78,10 @@ param_grid_aug = {
 n_aug_per_class = 10
 
 results = []
+grid = list(ParameterGrid(param_grid_aug))
+print("Début de la grid search sur {} combinaisons...".format(len(grid)))
 
-print("Début de la grid search sur {} combinaisons...".format(len(list(ParameterGrid(param_grid_aug)))))
-
-for params in ParameterGrid(param_grid_aug):
+for params in grid:
     augmented_X_list = []
     augmented_y_list = []
     
@@ -113,7 +114,7 @@ for params in ParameterGrid(param_grid_aug):
     clf = RandomForestClassifier(random_state=42)
     clf.fit(X_train_final, y_train_final)
     
-    # Évaluation sur le jeu de validation
+    # Évaluation sur le jeu de validation (non augmenté)
     y_pred = clf.predict(X_val)
     acc = accuracy_score(y_val, y_pred)
     
@@ -209,3 +210,60 @@ step = max(1, len(importances) // 10)
 plt.xticks(range(0, len(importances), step), X_train.columns[::step], rotation=45, ha="right")
 plt.tight_layout()
 plt.show()
+
+# ================================
+# 6. Validation croisée avec augmentation (sur l'ensemble complet)
+# ================================
+# Ici, nous utilisons StratifiedKFold pour effectuer une validation croisée manuelle.
+# Pour chaque fold, la partie d'entraînement est augmentée avec la meilleure configuration.
+X_full = data.drop(columns=[target_col])
+y_full = data[target_col]
+
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+cv_accuracies = []
+
+for train_idx, test_idx in cv.split(X_full, y_full):
+    # Extraction des données pour ce fold
+    X_train_cv = X_full.iloc[train_idx].reset_index(drop=True)
+    y_train_cv = y_full.iloc[train_idx].reset_index(drop=True)
+    X_test_cv = X_full.iloc[test_idx].reset_index(drop=True)
+    y_test_cv = y_full.iloc[test_idx].reset_index(drop=True)
+    
+    # Augmentation sur la portion d'entraînement du fold
+    augmented_X_list = []
+    augmented_y_list = []
+    
+    for cls in y_train_cv.unique():
+        cls_indices = X_train_cv[y_train_cv == cls].index
+        chosen_indices = np.random.choice(cls_indices, size=n_aug_per_class, replace=True)
+        for idx in chosen_indices:
+            spectrum = X_train_cv.loc[idx].values.astype(float)
+            aug_spec = augment_spectrum(
+                spectrum,
+                best_params['scale_min'],
+                best_params['scale_max'],
+                best_params['noise_std'],
+                best_params['shift_min'],
+                best_params['shift_max']
+            )
+            augmented_X_list.append(aug_spec)
+            augmented_y_list.append(cls)
+    
+    if augmented_X_list:
+        X_train_cv_aug = pd.DataFrame(augmented_X_list, columns=X_train_cv.columns)
+        y_train_cv_aug = pd.Series(augmented_y_list, name=target_col)
+        X_train_final_cv = pd.concat([X_train_cv, X_train_cv_aug], ignore_index=True)
+        y_train_final_cv = pd.concat([y_train_cv, y_train_cv_aug], ignore_index=True)
+    else:
+        X_train_final_cv = X_train_cv.copy()
+        y_train_final_cv = y_train_cv.copy()
+    
+    # Entraînement du modèle sur le fold augmenté
+    clf_cv = RandomForestClassifier(random_state=42)
+    clf_cv.fit(X_train_final_cv, y_train_final_cv)
+    y_pred_cv = clf_cv.predict(X_test_cv)
+    acc_cv = accuracy_score(y_test_cv, y_pred_cv)
+    cv_accuracies.append(acc_cv)
+
+print("\nAccuracies en validation croisée avec augmentation :", cv_accuracies)
+print("Accuracy moyenne en validation croisée :", np.mean(cv_accuracies))
