@@ -15,7 +15,7 @@ from sklearn.cross_decomposition import PLSRegression
 ### CHARGEMENT DES DONNEES ###
 
 # Load the combined data
-dataviti = pd.read_csv('C:/Users/alex2/anaconda3/envs/datascience/combined_data.csv', 
+dataviti = pd.read_csv('Data\combined_data.csv', 
                       sep=',', 
                       index_col=0)
 print(dataviti)
