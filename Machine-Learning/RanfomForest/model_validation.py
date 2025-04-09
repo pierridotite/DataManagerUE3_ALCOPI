@@ -26,10 +26,10 @@ validation_frames = []
 for specie in data[target_col].unique():
     specie_df = data[data[target_col] == specie]
     # Si possible, on prélève sans remise ; sinon, avec remise
-    if len(specie_df) >= 5:
-        val_specie = specie_df.sample(n=5, random_state=42)
+    if len(specie_df) >= 6:
+        val_specie = specie_df.sample(n=6, random_state=42)
     else:
-        val_specie = specie_df.sample(n=5, replace=True, random_state=42)
+        val_specie = specie_df.sample(n=6, replace=True, random_state=42)
     validation_frames.append(val_specie)
 validation_data = pd.concat(validation_frames)
 
@@ -99,13 +99,6 @@ plt.xlabel("Prédictions")
 plt.ylabel("Véritables")
 plt.tight_layout()
 plt.show()
-
-# Calcul du R² (après encodage des labels)
-le = LabelEncoder()
-y_val_enc = le.fit_transform(y_val)
-y_pred_enc = le.transform(y_pred)
-r2 = r2_score(y_val_enc, y_pred_enc)
-print("R² :", r2)
 
 # Graphique des importances des variables
 importances = rf.feature_importances_
