@@ -12,13 +12,9 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score, cross_val_
 # ================================
 
 # Charger les données
-<<<<<<< Updated upstream
 data_src = r'Data\combined_data.csv'
 data = pd.read_csv(data_src)
 
-=======
-data = pd.read_csv(r'Data\combined_data.csv')
->>>>>>> Stashed changes
 # On considère que la dernière colonne est la cible
 target_col = data.columns[-1]
 
