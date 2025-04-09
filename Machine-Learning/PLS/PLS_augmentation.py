@@ -16,7 +16,7 @@ from sklearn.model_selection import cross_val_score
 ### CHARGEMENT DES DONNEES ###
 
 # Load the combined data
-data = pd.read_csv('C:/Users/alex2/anaconda3/envs/datascience/combined_data.csv', 
+data = pd.read_csv('/Users/constance/Documents/GitHub/DataManagerUE3_ALCOPI/Data/combined_data.csv', 
                       sep=',', 
                       index_col=0)
 print(data)
@@ -77,21 +77,21 @@ random_aug_frames = []
 features = data_orig.columns[:-1]
 
 for specie in original_counts.index:
-    df_specie_orig = data_orig[data_orig['class'] == specie]
+    df_specie_orig = data_orig[data_orig['species'] == specie]
     for _ in range(n_random):
         new_row = {}
         for col in features:
             lower = df_specie_orig[col].min()
             upper = df_specie_orig[col].max()
             new_row[col] = np.random.uniform(lower, upper)
-        new_row['class'] = specie
+        new_row['species'] = specie
         random_aug_frames.append(new_row)
 
 random_aug = pd.DataFrame(random_aug_frames)
 train_scaled_aug = pd.concat([train_scaled_aug, random_aug], axis=0).reset_index(drop=True)
 
 # Visualisation après augmentation
-augmented_counts = train_scaled_aug['class'].value_counts()
+augmented_counts = train_scaled_aug['species'].value_counts()
 oversample_numbers = max_count - original_counts
 random_aug_counts = pd.Series(n_random, index=original_counts.index)
 
@@ -140,3 +140,14 @@ y_pred = pls_final.predict(X_test_scaled)
 
 # Évaluer la performance
 print("Score R2 :", pls_final.score(X_test_scaled, label_encoder.transform(y_test)))
+
+from sklearn.model_selection import GridSearchCV
+
+# Paramètres à tester
+param_grid = {'n_components': range(1, 21)}  # Nombres de composantes à tester
+
+pls_da = PLSRegression()
+grid_search = GridSearchCV(pls_da, param_grid, cv=5, scoring='accuracy')  # Utilisation de la précision comme score
+grid_search.fit(X_train_aug, pd.get_dummies(y_train_aug))
+
+print(f"Meilleur nombre de composantes : {grid_search.best_params_['n_components']}")
