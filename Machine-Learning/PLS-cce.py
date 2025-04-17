@@ -1,87 +1,150 @@
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.metrics import accuracy_score, classification_report
+import matplotlib.pyplot as plt
+import seaborn as sns  # Ajout de l'importation de seaborn
+from sklearn.model_selection import GridSearchCV, ParameterGrid, StratifiedKFold, cross_val_score
+from tqdm import tqdm
+from tqdm_joblib import tqdm_joblib
 from sklearn.cross_decomposition import PLSRegression
+from sklearn.metrics import r2_score, mean_squared_error, classification_report, confusion_matrix, accuracy_score
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler  # Ajout de StandardScaler
+from sklearn.multiclass import OneVsRestClassifier  # Ajout de OneVsRestClassifier
 
-# Charger les données spectrales
-dataviti = pd.read_csv('/Users/constance/Documents/GitHub/DataManagerUE3_ALCOPI/Data/combined_data.csv', 
-                       sep=',', 
-                       index_col=0)
-print(dataviti)
+# ================================
+# 1. Chargement et préparation des données
+# ================================
 
-# Préparation des données
-# Séparer les variables indépendantes (X) et la variable dépendante (y)
-X = dataviti.drop(columns=['species'])
-y = dataviti['species']
+data_src = ('/Users/constance/Documents/GitHub/DataManagerUE3_ALCOPI/Data/combined_data.csv')
+data = pd.read_csv(data_src)
 
-# Diviser les données en ensembles d'entraînement et de test
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# On considère que la dernière colonne est la cible
+target_col = data.columns[-1]
 
-# Normalisation des données
+# Création du jeu de validation : 5 individus par espèce
+validation_frames = []
+for specie in data[target_col].unique():
+    specie_df = data[data[target_col] == specie]
+    if len(specie_df) >= 6:
+        val_specie = specie_df.sample(n=6, random_state=42)
+    else:
+        val_specie = specie_df.sample(n=6, replace=True, random_state=42)
+    validation_frames.append(val_specie)
+validation_data = pd.concat(validation_frames)
+
+training_data = data.drop(validation_data.index)
+
+# Séparation en features et target
+X_train = training_data.drop(columns=[target_col])
+y_train = training_data[target_col]
+
+X_val = validation_data.drop(columns=[target_col])
+y_val = validation_data[target_col]
+
+# Standardisation des features
 scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)  # Appliquer le fit_transform sur l'ensemble d'entraînement
-X_test_scaled = scaler.transform(X_test)        # Appliquer transform sur l'ensemble de test (pas fit)
+X_train_scaled = scaler.fit_transform(X_train)
+X_val_scaled = scaler.transform(X_val)
 
-# Appliquer l'encodage des labels
-label_encoder = LabelEncoder()
-y_train_encoded = label_encoder.fit_transform(y_train)
-y_test_encoded = label_encoder.transform(y_test)
+# Encodage des labels
+le = LabelEncoder()
+y_train_enc = le.fit_transform(y_train)
+y_val_enc = le.transform(y_val)
 
-# Créer et ajuster le modèle PLS
-pls = PLSRegression(n_components=10)
-pls.fit(X_train_scaled, y_train_encoded)
+# ================================
+# 2. Affichage de l'histogramme des effectifs par espèce
+# ================================
 
-# Faire des prédictions sur l'ensemble de test
-y_pred = pls.predict(X_test_scaled)
+full_counts = data[target_col].value_counts().sort_index()  # Correction de sort_inde -> sort_index
+train_counts = training_data[target_col].value_counts().sort_index()  # Correction de sort_inde -> sort_index
+val_counts = validation_data[target_col].value_counts().sort_index()  # Correction de sort_inde -> sort_index
 
-# Convertir les prédictions continues en entiers arrondis
-y_pred_int = np.round(y_pred).astype(int)
+order = train_counts.sort_values(ascending=False).index
+train_counts = train_counts.reindex(order)  # Correction de reindeorder -> reindex(order)
+val_counts = val_counts.reindex(order, fill_value=0)  # Correction de reindeorder -> reindex(order)
 
-# Convertir les classes du label encoder en entiers
-valid_labels = label_encoder.transform(label_encoder.classes_)
+species = order
+x = np.arange(len(species))
+width = 0.6
 
-# Assurez-vous que les valeurs prédictives sont dans les limites des classes existantes
-# Si des prédictions dépassent la plage des classes valides, les clipper
-y_pred_int_clipped = np.clip(y_pred_int, valid_labels.min(), valid_labels.max())
-
-# Convertir les indices en labels en utilisant l'encodeur inverse
-y_pred_labels = label_encoder.inverse_transform(y_pred_int_clipped)
-
-# Vérification des tailles des variables pour s'assurer qu'elles sont cohérentes
-print(f"y_test_encoded shape: {y_test_encoded.shape}")
-print(f"y_pred_labels length: {len(y_pred_labels)}")
-
-# Afficher les premiers éléments des prédictions
-print("First 5 predictions: ", y_pred_labels[:5])
-
-# Calcul de la précision et rapport de classification
-accuracy = accuracy_score(y_test_encoded, y_pred_labels)
-print("Accuracy: ", accuracy)
-print(classification_report(y_test_encoded, y_pred_labels))
-
-
-# Afficher le rapport de classification
-print("Classification Report: ")
-print(classification_report(y_test_encoded, y_pred_labels))
-
-# Afficher la matrice de confusion
-print("Confusion Matrix: ")
-print(confusion_matrix(y_test_encoded, y_pred_labels))
-
-# Courbe ROC
-fpr, tpr, thresholds = roc_curve(y_test_encoded, pls.predict(X_test_scaled))
-roc_auc = auc(fpr, tpr)
-
-plt.figure()
-plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
-plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('Receiver Operating Characteristic (ROC)')
-plt.legend(loc='lower right')
+plt.figure(figsize=(10,6))
+plt.bar(x, val_counts, width, color='green', label='Validation dataset (6 per species)')
+plt.bar(x, train_counts, width, bottom=val_counts, color='blue', label='Training dataset')
+plt.xticks(x, species, rotation=45)
+plt.xlabel("Espèce")
+plt.ylabel("Nombre d'échantillons")
+plt.title("Histogramme : Effectifs par espèce (Training + Validation)")
+plt.legend()
+plt.tight_layout()
 plt.show()
 
+# ================================
+# 3. Entraînement et évaluation du modèle PLS (paramètres par défaut)
+# ================================
+
+# Définir un modèle PLS simple avec un nombre fixe de composantes
+pls = OneVsRestClassifier(PLSRegression(n_components=2))
+pls.fit(X_train_scaled, y_train_enc)
+
+# Prédictions
+y_pred_enc = pls.predict(X_val_scaled)
+y_pred_enc = np.round(y_pred_enc).astype(int).ravel()  # Argmax car pls.predict donne des valeurs continues
+
+# Décodage des labels prédits
+y_pred = le.inverse_transform(y_pred_enc)
+
+print("\nClassification Report (Paramètres par défaut):")
+print(classification_report(y_val, y_pred))
+
+cm = confusion_matrix(y_val, y_pred)  # Correction de confusion_matriy -> confusion_matrix
+plt.figure(figsize=(8,6))
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+plt.title("Matrice de confusion (Paramètres par défaut)")
+plt.xlabel("Prédictions")
+plt.ylabel("Véritables")
+plt.tight_layout()
+plt.show()
+
+# Calcul du R²
+r2 = r2_score(y_val_enc, y_pred_enc)
+print("R² :", r2)
+
+# ================================
+# 4. Recherche du meilleur nombre de composantes pour le modèle PLS
+# ================================
+
+# Définir la grille de recherche pour n_components
+param_grid = {'estimator__n_components': list(range(2, min(30, X_train.shape[1])))}
+
+pls_grid = OneVsRestClassifier(PLSRegression())
+grid_search = GridSearchCV(pls_grid, param_grid, cv=5, n_jobs=-1, scoring='accuracy')
+
+total_iter = len(param_grid['estimator__n_components']) * 5
+print("\nLancement de la recherche du meilleur nombre de composantes sur {} tâches...".format(total_iter))
+
+# with tqdm_joblib(tqdm(desc="GridSearch PLS", total=total_iter)):
+#     grid_search.fit(X_train_scaled, y_train_enc)
+grid_search.fit(X_train_scaled, y_train_enc)
+
+print("\nMeilleur nombre de composantes trouvé :", grid_search.best_params_['estimator__n_components'])
+print("Meilleure accuracy en CV : {:.4f}".format(grid_search.best_score_))
+
+# ================================
+# 5. Évaluation du modèle optimisé
+# ================================
+
+y_pred_best_enc = grid_search.predict(X_val_scaled)
+y_pred_best_enc = grid_search.predict(X_val_scaled)  # Correction de np.argmay -> np.argmax
+
+y_pred_best = le.inverse_transform(y_pred_best_enc)
+
+print("\nClassification Report (Modèle optimisé):")
+print(classification_report(y_val, y_pred_best))
+
+cm_best = confusion_matrix(y_val, y_pred_best)  # Correction de confusion_matriy -> confusion_matrix
+plt.figure(figsize=(8,6))
+sns.heatmap(cm_best, annot=True, fmt="d", cmap="Blues")
+plt.title("Matrice de confusion (Modèle optimisé)")
+plt.xlabel("Prédictions")
+plt.ylabel("Véritables")
+plt.tight_layout()
+plt.show()
