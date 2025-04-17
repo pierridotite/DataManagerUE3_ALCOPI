@@ -13,10 +13,15 @@ from tqdm_joblib import tqdm_joblib
 # 1. Chargement et préparation des données
 # ================================
 
+<<<<<<< HEAD
 data = pd.read_csv('C:/Users/alex2/anaconda3/envs/datascience/combined_data.csv', 
                       sep=',', 
                       index_col=0)
 print(data)
+=======
+data_src = ('/Users/constance/Documents/GitHub/DataManagerUE3_ALCOPI/Data/combined_data.csv')
+data = pd.read_csv(data_src)
+>>>>>>> a53ccbc35a39d6144f546cad14211a9bdb24f51c
 
 # On considère que la dernière colonne est la cible
 target_col = data.columns[-1]
