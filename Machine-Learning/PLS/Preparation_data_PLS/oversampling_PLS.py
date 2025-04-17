@@ -14,8 +14,10 @@ from imblearn.over_sampling import RandomOverSampler
 # ================================
 
 # Charger les données
-data_src = r'Data\combined_data.csv'
-data = pd.read_csv(data_src)
+data = pd.read_csv('C:/Users/alex2/anaconda3/envs/datascience/combined_data.csv', 
+                      sep=',', 
+                      index_col=0)
+print(data)
 
 # On considère que la dernière colonne est la cible
 target_col = data.columns[-1]
